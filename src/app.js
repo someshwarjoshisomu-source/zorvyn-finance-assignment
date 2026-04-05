@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 const errorHandler = require("./middlewares/error.middleware")
 
@@ -10,12 +11,22 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 
 const app = express();
 
-//Middlewares
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
+// Rate limiter for API routes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later'
+  }
+});
+app.use('/api', limiter);
 
-//routes
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/records", recordRoutes);
@@ -25,7 +36,7 @@ app.get("/", (req, res) => {
     res.json({ message: "Zorvyn Finance API"});
 })
 
-//Error handler
+// Error handler
 app.use(errorHandler);
 
 module.exports = app;

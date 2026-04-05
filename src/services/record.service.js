@@ -1,105 +1,140 @@
 const FinancialRecord = require("../models/record.model");
+const ApiError = require("../utils/ApiError");
 
-//create record
-
+// CREATE
 const createRecord = async (userId, data) => {
-    const record = new FinancialRecord({
-        userId,
-        amount: data.amount,
-        type: data.type,
-        category: data.category,
-        date: data.date,
-        notes: data.notes,
-    });
+  const record = new FinancialRecord({
+    userId,
+    amount: data.amount,
+    type: data.type,
+    category: data.category,
+    date: data.date,
+    notes: data.notes,
+  });
 
-    await record.save();
-    return record;
-}
-
-//get record with filters
-
-const getRecords = async (filters) => {
-    const query = { isDeleted: false };
-
-    if(filters.type){
-        query.type = filters.type;
-    }
-
-    if(filters.category){
-        query.category = filters.category;
-    }
-
-    if(filters.startDate || filters.endDate){
-        query.date = {};
-        if(filters.startDate){
-            query.date.$gte = new Date(filters.startDate);
-        }
-        if(filters.endDate){
-            query.date.$lte = new Date(filters.endDate);
-        }
-    }
-
-    const records = await FinancialRecord.find(query)
-    .sort({date:-1})
-    .populate("userId", "name email");
-
-    return records;
-}
-
-//get single record
-const getRecordById = async (id)=>{
-    const record = await FinancialRecord.findOne({
-        _id: id,
-        isDeleted: false
-    });
-
-    if(!record) {
-        throw new Error("Record not found");
-    }
-
-    return record;
+  await record.save();
+  return record;
 };
 
-//update record
+// GET ALL (WITH RBAC)
+const getRecords = async (user, filters, page = 1, limit = 10) => {
+  page = Number(page) || 1;
+  limit = Number(limit) || 10;
+  const skip = (page - 1) * limit;
 
-const updateRecord = async (id, data) => {
-    const record = await FinancialRecord.findOne({
-      _id: id,
-      isDeleted: false
-    });
+  const query = { isDeleted: false };
 
-    if (!record) {
-      throw new Error("Record not found");
-    }
+  // RBAC: restrict for non-admin
+  if (user.role !== "ADMIN") {
+    query.userId = user._id;
+  }
 
-    if(data.amount !== undefined) record.amount = data.amount
-    if(data.type !== undefined) record.type = data.type
-    if(data.category !== undefined) record.category = data.category
-    if(data.date !== undefined) record.date = data.date
-    if(data.notes !== undefined) record.notes = data.notes
+  if (filters.type) query.type = filters.type;
+  if (filters.category) query.category = filters.category;
 
-    await record.save();
+  if (filters.startDate || filters.endDate) {
+    query.date = {};
+    if (filters.startDate) query.date.$gte = new Date(filters.startDate);
+    if (filters.endDate) query.date.$lte = new Date(filters.endDate);
+  }
 
-    return record;
-}
+  // Sanitize search
+  if (filters.search) {
+    const safeSearch = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-//soft delete
+    query.$or = [
+      { category: { $regex: safeSearch, $options: "i" } },
+      { notes: { $regex: safeSearch, $options: "i" } },
+    ];
+  }
 
-const deleteRecord = async (id) => {
-    const record = await FinancialRecord.findOne({
-      _id: id,
-      isDeleted: false,
-    });
+  const records = await FinancialRecord.find(query)
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate("userId", "name email");
 
-    if (!record) {
-      throw new Error("Record not found");
-    }
+  const totalCount = await FinancialRecord.countDocuments(query);
 
-    record.isDeleted = true;
-    await record.save();
+  return {
+    records,
+    totalCount,
+    totalPages: Math.ceil(totalCount / limit),
+    currentPage: page,
+  };
+};
 
-    return { message: "Record deleted"};
-}
+// GET ONE
+const getRecordById = async (user, id) => {
+  const record = await FinancialRecord.findOne({
+    _id: id,
+    isDeleted: false,
+  });
+
+  if (!record) throw new ApiError(404, "Record not found");
+
+  // Ownership check
+  if (
+    user.role !== "ADMIN" &&
+    record.userId.toString() !== user._id.toString()
+  ) {
+    throw new ApiError(403, "Unauthorized access");
+  }
+
+
+  return record;
+};
+
+// UPDATE
+const updateRecord = async (user, id, data) => {
+  const record = await FinancialRecord.findOne({
+    _id: id,
+    isDeleted: false,
+  });
+
+  if (!record) throw new ApiError(404, "Record not found");
+
+  // Ownership check
+  if (
+    user.role !== "ADMIN" &&
+    record.userId.toString() !== user._id.toString()
+  ) {
+    throw new ApiError(403, "Unauthorized access");
+  }
+
+  if (data.amount !== undefined) record.amount = data.amount;
+  if (data.type !== undefined) record.type = data.type;
+  if (data.category !== undefined) record.category = data.category;
+  if (data.date !== undefined) record.date = data.date;
+  if (data.notes !== undefined) record.notes = data.notes;
+
+  await record.save();
+
+  return record;
+};
+
+// DELETE
+const deleteRecord = async (user, id) => {
+  const record = await FinancialRecord.findOne({
+    _id: id,
+    isDeleted: false,
+  });
+
+  if (!record) throw new ApiError(404, "Record not found");
+
+  // Ownership check
+  if (
+    user.role !== "ADMIN" &&
+    record.userId.toString() !== user._id.toString()
+  ) {
+    throw new ApiError(403, "Unauthorized access");
+  }
+
+  record.isDeleted = true;
+  await record.save();
+
+  return { message: "Record deleted" };
+};
 
 module.exports = {
   createRecord,

@@ -9,18 +9,32 @@ const userController = require("../controllers/user.controller");
 
 const router = express.Router();
 
-//all routes require authentication
-
+//All routes require authentication
 router.use(authenticate);
 
-//GET all users(admin only)
+
+//SELF ROUTES
+
+// GET current user
+router.get("/me", userController.getCurrentUser);
+
+// UPDATE profile (name/email optional)
+router.patch(
+  "/me",
+  [body("name").optional().isString(), body("email").optional().isEmail()],
+  validate,
+  userController.updateCurrentUser,
+);
+
+//ADMIN ROUTES
+
+// GET all users
 router.get("/", authorize("ADMIN"), userController.getUsers);
 
-//GET user by id (admin only)
+// GET user by id
 router.get("/:id", authorize("ADMIN"), userController.getUser);
 
-//UPDATE ROLE (ADMIN only)
-
+// UPDATE ROLE
 router.patch(
   "/:id/role",
   authorize("ADMIN"),
@@ -33,14 +47,13 @@ router.patch(
   userController.updateRole,
 );
 
-//UPDATE Status (ADMIN only)
-
+// UPDATE STATUS (FIXED)
 router.patch(
   "/:id/status",
   authorize("ADMIN"),
   [body("status").isIn(["ACTIVE", "INACTIVE"]).withMessage("Invalid status")],
   validate,
-  userController.updateRole,
+  userController.updateStatus,
 );
 
 module.exports = router;

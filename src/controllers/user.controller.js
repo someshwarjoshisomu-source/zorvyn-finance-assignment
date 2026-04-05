@@ -55,9 +55,40 @@ const updateStatus = async (req, res, next) => {
     }
 }
 
+exports.getCurrentUser = async (req, res, next) => {
+    try {
+        res.status(200).json({
+            success: true,
+            data: req.user,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.updateCurrentUser = async (req, res, next) => {
+    try {
+        const user = req.user;
+
+        if (req.body.name !== undefined) user.name = req.body.name;
+        if (req.body.email !== undefined) user.email = req.body.email;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            data: user,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
-  getUsers,
-  getUser,
-  updateRole,
-  updateStatus
+    getUsers,
+    getUser,
+    updateRole,
+    updateStatus,
+    getCurrentUser: exports.getCurrentUser,
+    updateCurrentUser: exports.updateCurrentUser
 };
