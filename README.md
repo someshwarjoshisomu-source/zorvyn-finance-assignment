@@ -1,77 +1,103 @@
-Zorvyn Finance Dashboard
+# Zorvyn Finance Dashboard
 
 A production-style full-stack financial dashboard designed to manage records, analyze financial data, and enforce structured role-based access control.
 
 This project focuses on building a system that reflects real backend practices — clear architecture, controlled access, and reliable runtime behavior — rather than just implementing features.
 
-What this project does
+---
+
+## What this project does
 
 Zorvyn allows users to:
 
-Register and authenticate securely using JWT
-Manage financial records (income and expenses)
-Filter, search, and paginate records efficiently
-View financial summaries and analytics
-Access features based on role (Viewer, Analyst, Admin)
+- Register and authenticate securely using JWT  
+- Manage financial records (income and expenses)  
+- Filter, search, and paginate records efficiently  
+- View financial summaries and analytics  
+- Access features based on role (Viewer, Analyst, Admin)  
 
 All records are globally visible in read-only mode, while write operations are restricted to admins.
 
-Tech Stack
-Backend
-Node.js + Express
-MongoDB (Atlas for production)
-Mongoose
-JWT Authentication
-Express Validator
-Helmet + Rate Limiting
-Morgan (request logging)
-Frontend
-React (Vite)
-Axios
-React Router
-Recharts (charts & analytics)
-Testing & CI
-Jest + Supertest
-MongoDB Memory Server
-GitHub Actions
-Runtime Smoke Testing
-Key Features
-Authentication & Users
-JWT-based authentication
-Secure password hashing
-Role-based access (Viewer / Analyst / Admin)
-Active/Inactive user handling
-Financial Records
-Create, update, delete (Admin only)
-Read access for all roles
-Soft delete to preserve historical data
-Fields: amount, category, type, date, notes
-Filtering & Search
-Filter by type, category, and date range
-Full-text search
-Pagination with limits
-Dashboard & Analytics
-Total income, expenses, balance
-Monthly and weekly trends
-Category breakdown
-Recent activity
-Role-Based Access
-Viewer
-Can view all records
-Can access summary dashboard
-No analytics access
-No write permissions
-Analyst
-Everything a Viewer can do
-Access to analytics (charts, trends, categories)
-No write permissions
-Admin
-Full system access
-Create, update, delete records
-Manage users and roles
-Access all analytics
-Running Locally
-Backend
+---
+
+## Tech Stack
+
+### Backend
+- Node.js + Express  
+- MongoDB (Atlas for production)  
+- Mongoose  
+- JWT Authentication  
+- Express Validator  
+- Helmet + Rate Limiting  
+- Morgan (request logging)  
+
+### Frontend
+- React (Vite)  
+- Axios  
+- React Router  
+- Recharts (charts & analytics)  
+
+### Testing & CI
+- Jest + Supertest  
+- MongoDB Memory Server  
+- GitHub Actions  
+- Runtime Smoke Testing  
+
+---
+
+## Key Features
+
+### Authentication & Users
+- JWT-based authentication  
+- Secure password hashing  
+- Role-based access (Viewer / Analyst / Admin)  
+- Active/Inactive user handling  
+
+### Financial Records
+- Create, update, delete (Admin only)  
+- Read access for all roles  
+- Soft delete to preserve historical data  
+- Fields: amount, category, type, date, notes  
+
+### Filtering & Search
+- Filter by type, category, and date range  
+- Full-text search  
+- Pagination with limits  
+
+### Dashboard & Analytics
+- Total income, expenses, balance  
+- Monthly and weekly trends  
+- Category breakdown  
+- Recent activity  
+
+---
+
+## Role-Based Access
+
+### Viewer
+- Can view all records  
+- Can access summary dashboard  
+- No analytics access  
+- No write permissions  
+
+### Analyst
+- Everything a Viewer can do  
+- Access to analytics (charts, trends, categories)  
+- No write permissions  
+
+### Admin
+- Full system access  
+- Create, update, delete records  
+- Manage users and roles  
+- Access all analytics  
+
+---
+
+## Running Locally
+
+### Backend
+
+```bash
 cd zorvyn-backend
 npm install
 
@@ -98,35 +124,46 @@ Deployment
 The application is deployed using a cloud-based setup:
 
 Backend: Render
+Frontend: Vercel
 Database: MongoDB Atlas
-Live API
-https://your-render-app-url/api
+Live Application
 
-Replace with your actual deployed URL
+Frontend:
+https://zorvyn-finance-assignment-mu.vercel.app
+
+Backend API:
+http://zorvyn-finance-assignment-1.onrender.com/api
 
 Health Check
-https://your-render-app-url/api/health
+
+http://zorvyn-finance-assignment-1.onrender.com/api/health
 
 This endpoint confirms server status and runtime health.
 
-Production Environment Variables
+Environment Variables
 
-Configured securely in Render:
+Create a .env file in the backend root:
 
-MONGO_URI=<MongoDB Atlas connection string>
-JWT_SECRET=<secure production secret>
-PORT=10000
-NODE_ENV=production
-Notes
-MongoDB Atlas is used for persistent cloud storage
-No credentials are hardcoded
-Environment variables are used across environments
-The same codebase runs locally and in production
+PORT=3000
+MONGO_URI=<your_mongodb_atlas_connection_string>
+JWT_SECRET=<your_secure_secret_key>
+JWT_EXPIRE=7d
+NODE_ENV=development
+
+Note:
+Never commit your actual .env file or secrets (Mongo URI, JWT secret) to GitHub.
+Use environment variables in your deployment platform (Render) instead.
+
 API Overview
+Base URL
 
-Base URL:
+Local:
 
 http://localhost:3000/api
+
+Production:
+
+http://zorvyn-finance-assignment-1.onrender.com/api
 Auth
 POST /auth/register
 POST /auth/login
@@ -172,17 +209,20 @@ Controllers handle requests
 Services handle business logic
 Middleware handles authentication, validation, and errors
 Design Decisions
-
 Service Layer
+
 Separates business logic from controllers, improving maintainability.
 
 Soft Delete
+
 Preserves data for analytics and prevents accidental loss.
 
 Global Read Access
+
 All roles can view records; only admins can modify them.
 
 Layered RBAC
+
 Authorization enforced at both route and service levels.
 
 Known Limitations
@@ -204,6 +244,13 @@ Test coverage is currently limited and can be expanded further.
 
 Final Note
 
-This project prioritizes system design and backend structure over surface-level features.
+This project was built with a strong emphasis on backend architecture, access control, and production-like behavior rather than just UI features.
 
-The focus was to build something that behaves predictably, enforces access correctly, and can scale with additional features — closer to a real-world system than a tutorial project.
+Key priorities included:
+
+Enforcing strict role-based access control across the entire system
+Maintaining a clean separation between controllers, services, and data layers
+Ensuring consistent API behavior across environments (local, CI, production)
+Building a system that is predictable, debuggable, and extensible
+
+The goal was not just to complete the assignment, but to demonstrate how a real-world backend system should be structured and reasoned about.
