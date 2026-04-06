@@ -1,19 +1,20 @@
 const User = require("../models/user.model");
+const ApiError = require("../utils/ApiError");
 
-const registerUser = async (name, email, password, role) => {
+const registerUser = async (name, email, password) => {
     const existingUser = await User.findOne({email});
 
     if (existingUser) {
-      throw new Error("Email already registered");
+      throw new ApiError(400, "Email already registered");
     }
 
     const user = await User.create({
         name,
         email,
         password,
-        role
+        role: "VIEWER",
     });
-    await user.save();
+
     return user;
 }
 
@@ -21,18 +22,19 @@ const loginUser = async (email, password) => {
     const user = await User.findOne({email});
 
     if(!user) {
-        throw  new Error("Invalid Credentials");
+        throw new ApiError(401, "Invalid Credentials");
     }
 
     if (user.status ==="INACTIVE") {
-      throw new Error("Account is inactive");
+      throw new ApiError(403, "Account is inactive");
     }
 
     const isMatch = await user.matchPassword(password);
 
     if(!isMatch){
-        throw new Error("Invalid credentials");
+        throw new ApiError(401, "Invalid Credentials");
     }
+
     return user;
 };
 

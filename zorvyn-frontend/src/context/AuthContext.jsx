@@ -1,32 +1,46 @@
-import { createContext, useContext, useEffect, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // On mount → load from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
+    if (!storedUser) return null;
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem("user");
+      return null;
     }
+  });
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [loading] = useState(false);
 
-    setLoading(false);
-  }, []);
+  const persistUser = (nextUser) => {
+    localStorage.setItem("user", JSON.stringify(nextUser));
+    setUser(nextUser);
+  };
 
   // Login
   const login = (userData, tokenValue) => {
     localStorage.setItem("token", tokenValue);
-    localStorage.setItem("user", JSON.stringify(userData));
-
-    setUser(userData);
+    persistUser(userData);
     setToken(tokenValue);
+  };
+
+  // Keep current auth session but refresh user fields (e.g., role/status/profile updates)
+  const updateUser = (partialUser) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const merged = {
+        ...prev,
+        ...(partialUser || {}),
+      };
+      localStorage.setItem("user", JSON.stringify(merged));
+      return merged;
+    });
   };
 
   // Logout
@@ -39,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

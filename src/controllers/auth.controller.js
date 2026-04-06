@@ -3,9 +3,9 @@ const generateToken = require("../utils/generateToken");
 
 const register = async (req, res, next) => {
     try {
-        const { name, email, password, role} = req.body;
+        const { name, email, password } = req.body;
 
-        const user = await authService.registerUser(name, email, password, role);
+        const user = await authService.registerUser(name, email, password);
 
         const token = generateToken(user._id, user.role);
 

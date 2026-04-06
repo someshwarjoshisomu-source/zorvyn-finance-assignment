@@ -10,7 +10,7 @@ const validate = (req, res, next) => {
         400,
         "Validation failed",
         errors.array().map((err) => ({
-          field: err.param,
+          field: err.param || err.path,
           message: err.msg,
         })),
       ),

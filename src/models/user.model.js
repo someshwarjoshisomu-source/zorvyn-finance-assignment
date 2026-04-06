@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      //   index: true,
     },
     password: {
       type: String,
@@ -31,7 +30,18 @@ const userSchema = new mongoose.Schema(
       default: "ACTIVE",
     },
   },
-  { timestamps: true },
+  { 
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        delete ret.password;
+        delete ret.__v;
+        ret.id = ret._id;
+        delete ret._id;
+        return ret;
+      },
+    },
+  },
 );
 
 //hash password

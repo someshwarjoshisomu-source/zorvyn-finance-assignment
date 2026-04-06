@@ -1,5 +1,5 @@
 const express = require("express");
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 
 const authenticate = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorize.middleware");
@@ -21,7 +21,10 @@ router.get("/me", userController.getCurrentUser);
 // UPDATE profile (name/email optional)
 router.patch(
   "/me",
-  [body("name").optional().isString(), body("email").optional().isEmail()],
+  [
+    body("name").optional().trim().isLength({ min: 2, max: 80 }).withMessage("Name must be between 2 and 80 characters"),
+    body("email").optional().isEmail().withMessage("Valid email is required").normalizeEmail(),
+  ],
   validate,
   userController.updateCurrentUser,
 );
@@ -31,14 +34,38 @@ router.patch(
 // GET all users
 router.get("/", authorize("ADMIN"), userController.getUsers);
 
+// CREATE user (ADMIN)
+router.post(
+  "/",
+  authorize("ADMIN"),
+  [
+    body("name").trim().isLength({ min: 2, max: 80 }).withMessage("Name must be between 2 and 80 characters"),
+    body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
+    body("password")
+      .matches(/^(?=.*[A-Za-z])(?=.*\d).{8,}$/)
+      .withMessage("Password must be at least 8 characters and include letters and numbers"),
+    body("role").optional().isIn(["VIEWER", "ANALYST", "ADMIN"]).withMessage("Invalid role"),
+    body("status").optional().isIn(["ACTIVE", "INACTIVE"]).withMessage("Invalid status"),
+  ],
+  validate,
+  userController.createUser,
+);
+
 // GET user by id
-router.get("/:id", authorize("ADMIN"), userController.getUser);
+router.get(
+  "/:id",
+  authorize("ADMIN"),
+  [param("id").isMongoId().withMessage("Invalid user id")],
+  validate,
+  userController.getUser,
+);
 
 // UPDATE ROLE
 router.patch(
   "/:id/role",
   authorize("ADMIN"),
   [
+    param("id").isMongoId().withMessage("Invalid user id"),
     body("role")
       .isIn(["VIEWER", "ANALYST", "ADMIN"])
       .withMessage("Invalid role"),
@@ -51,9 +78,21 @@ router.patch(
 router.patch(
   "/:id/status",
   authorize("ADMIN"),
-  [body("status").isIn(["ACTIVE", "INACTIVE"]).withMessage("Invalid status")],
+  [
+    param("id").isMongoId().withMessage("Invalid user id"),
+    body("status").isIn(["ACTIVE", "INACTIVE"]).withMessage("Invalid status"),
+  ],
   validate,
   userController.updateStatus,
+);
+
+// DEACTIVATE user (ADMIN lifecycle op)
+router.delete(
+  "/:id",
+  authorize("ADMIN"),
+  [param("id").isMongoId().withMessage("Invalid user id")],
+  validate,
+  userController.deactivateUser,
 );
 
 module.exports = router;

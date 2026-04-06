@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --detectOpenHandles --forceExit"
+    "seed": "node seed.js",
+    "test": "jest --runInBand",
+    "smoke:runtime": "node scripts/smoke-runtime.js"
   },
   "keywords": [],
   "author": "",
@@ -18,16 +20,15 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
     "express-validator": "^7.3.2",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.3.3"
+    "mongoose": "^9.3.3",
+    "morgan": "^1.10.1"
   },
   "devDependencies": {
     "jest": "^29.0.0",
+    "mongodb-memory-server": "^10.1.4",
     "nodemon": "^3.1.14",
     "supertest": "^6.3.3"
-  },
-  "jest": {
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
-    "testTimeout": 20000
   }
 }

@@ -31,6 +31,20 @@ router.get(
   dashboardController.getMonthlyTrends
 );
 
+// Weekly trends (ANALYST, ADMIN)
+router.get(
+  "/trends/weekly",
+  authorize("ANALYST", "ADMIN"),
+  dashboardController.getWeeklyTrends
+);
+
+// Last 7 days trends (ANALYST, ADMIN)
+router.get(
+  "/trends/last7days",
+  authorize("ANALYST", "ADMIN"),
+  dashboardController.getLast7DaysTrends
+);
+
 // Recent activity (all roles)
 router.get(
   "/recent",

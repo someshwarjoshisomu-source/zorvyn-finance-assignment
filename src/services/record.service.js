@@ -1,6 +1,21 @@
 const FinancialRecord = require("../models/record.model");
 const ApiError = require("../utils/ApiError");
 
+const buildRecordScope = (user) => {
+  // Assignment behavior: VIEWER and ANALYST are read-only but can
+  // view the complete dataset created/managed by ADMIN.
+  return { isDeleted: false };
+};
+
+const toValidDate = (value, label) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new ApiError(400, `${label} is invalid`);
+  }
+  return parsed;
+};
+
 // CREATE
 const createRecord = async (userId, data) => {
   const record = new FinancialRecord({
@@ -16,26 +31,35 @@ const createRecord = async (userId, data) => {
   return record;
 };
 
-// GET ALL (WITH RBAC)
-const getRecords = async (user, filters, page = 1, limit = 10) => {
+// GET ALL (GLOBAL VISIBILITY)
+const getRecords = async (_user, filters, page = 1, limit = 10) => {
   page = Number(page) || 1;
   limit = Number(limit) || 10;
   const skip = (page - 1) * limit;
 
-  const query = { isDeleted: false };
-
-  // RBAC: restrict for non-admin
-  if (user.role !== "ADMIN") {
-    query.userId = user._id;
-  }
+  const query = buildRecordScope(_user);
 
   if (filters.type) query.type = filters.type;
   if (filters.category) query.category = filters.category;
 
   if (filters.startDate || filters.endDate) {
+    const parsedStartDate = toValidDate(filters.startDate, "startDate");
+    const parsedEndDate = toValidDate(filters.endDate, "endDate");
+
+    if (parsedStartDate && parsedEndDate && parsedStartDate > parsedEndDate) {
+      throw new ApiError(400, "startDate must be less than or equal to endDate");
+    }
+
     query.date = {};
-    if (filters.startDate) query.date.$gte = new Date(filters.startDate);
-    if (filters.endDate) query.date.$lte = new Date(filters.endDate);
+    if (parsedStartDate) {
+      parsedStartDate.setUTCHours(0, 0, 0, 0);
+      query.date.$gte = parsedStartDate;
+    }
+
+    if (parsedEndDate) {
+      parsedEndDate.setUTCHours(23, 59, 59, 999);
+      query.date.$lte = parsedEndDate;
+    }
   }
 
   // Sanitize search
@@ -59,28 +83,20 @@ const getRecords = async (user, filters, page = 1, limit = 10) => {
   return {
     records,
     totalCount,
-    totalPages: Math.ceil(totalCount / limit),
+    totalPages: Math.max(1, Math.ceil(totalCount / limit)),
     currentPage: page,
   };
 };
 
 // GET ONE
-const getRecordById = async (user, id) => {
+const getRecordById = async (_user, id) => {
+  const scope = buildRecordScope(_user);
   const record = await FinancialRecord.findOne({
     _id: id,
-    isDeleted: false,
+    ...scope,
   });
 
   if (!record) throw new ApiError(404, "Record not found");
-
-  // Ownership check
-  if (
-    user.role !== "ADMIN" &&
-    record.userId.toString() !== user._id.toString()
-  ) {
-    throw new ApiError(403, "Unauthorized access");
-  }
-
 
   return record;
 };
