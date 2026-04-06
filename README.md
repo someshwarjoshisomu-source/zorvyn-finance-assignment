@@ -1,214 +1,209 @@
-# Zorvyn Backend
+Zorvyn Finance Dashboard
 
-Production-ready Express + MongoDB backend for the Zorvyn finance dashboard assignment.
+A production-style full-stack financial dashboard designed to manage records, analyze financial data, and enforce structured role-based access control.
 
-## Setup Instructions
+This project focuses on building a system that reflects real backend practices — clear architecture, controlled access, and reliable runtime behavior — rather than just implementing features.
 
-1. Install dependencies
-```bash
+What this project does
+
+Zorvyn allows users to:
+
+Register and authenticate securely using JWT
+Manage financial records (income and expenses)
+Filter, search, and paginate records efficiently
+View financial summaries and analytics
+Access features based on role (Viewer, Analyst, Admin)
+
+All records are globally visible in read-only mode, while write operations are restricted to admins.
+
+Tech Stack
+Backend
+Node.js + Express
+MongoDB (Atlas for production)
+Mongoose
+JWT Authentication
+Express Validator
+Helmet + Rate Limiting
+Morgan (request logging)
+Frontend
+React (Vite)
+Axios
+React Router
+Recharts (charts & analytics)
+Testing & CI
+Jest + Supertest
+MongoDB Memory Server
+GitHub Actions
+Runtime Smoke Testing
+Key Features
+Authentication & Users
+JWT-based authentication
+Secure password hashing
+Role-based access (Viewer / Analyst / Admin)
+Active/Inactive user handling
+Financial Records
+Create, update, delete (Admin only)
+Read access for all roles
+Soft delete to preserve historical data
+Fields: amount, category, type, date, notes
+Filtering & Search
+Filter by type, category, and date range
+Full-text search
+Pagination with limits
+Dashboard & Analytics
+Total income, expenses, balance
+Monthly and weekly trends
+Category breakdown
+Recent activity
+Role-Based Access
+Viewer
+Can view all records
+Can access summary dashboard
+No analytics access
+No write permissions
+Analyst
+Everything a Viewer can do
+Access to analytics (charts, trends, categories)
+No write permissions
+Admin
+Full system access
+Create, update, delete records
+Manage users and roles
+Access all analytics
+Running Locally
+Backend
 cd zorvyn-backend
 npm install
-```
 
-2. Configure environment variables (create `.env` in `zorvyn-backend/`)
-```env
+Create .env:
+
 MONGO_URI=mongodb://127.0.0.1:27017/zorvyn
-JWT_SECRET=your_jwt_secret_min_32_chars
+JWT_SECRET=your_secret_key_min_32_characters
 PORT=3000
 NODE_ENV=development
-```
 
-3. Seed demo data
-```bash
-npm run seed
-```
+Start server:
 
-4. Start server
-```bash
 npm run dev
-```
+Frontend
+cd zorvyn-backend/zorvyn-frontend
+npm install
+npm run dev
 
-Production start:
-```bash
-npm start
-```
+Frontend runs on:
+
+http://localhost:5173
+Deployment
+
+The application is deployed using a cloud-based setup:
+
+Backend: Render
+Database: MongoDB Atlas
+Live API
+https://your-render-app-url/api
+
+Replace with your actual deployed URL
+
+Health Check
+https://your-render-app-url/api/health
+
+This endpoint confirms server status and runtime health.
+
+Production Environment Variables
+
+Configured securely in Render:
+
+MONGO_URI=<MongoDB Atlas connection string>
+JWT_SECRET=<secure production secret>
+PORT=10000
+NODE_ENV=production
+Notes
+MongoDB Atlas is used for persistent cloud storage
+No credentials are hardcoded
+Environment variables are used across environments
+The same codebase runs locally and in production
+API Overview
 
 Base URL:
-`http://localhost:3000/api`
 
-## Environment Variables
+http://localhost:3000/api
+Auth
+POST /auth/register
+POST /auth/login
+Users
+GET /users/me
+PATCH /users/me
+Admin-only user management routes
+Records
+GET /records
+POST /records (Admin)
+PATCH /records/:id (Admin)
+DELETE /records/:id (Admin)
+Dashboard
+/dashboard/summary
+/dashboard/trends
+/dashboard/categories
+Runtime Reliability
 
-Required on startup (validated by `src/utils/env-validator.js`):
-- `MONGO_URI`
-- `JWT_SECRET`
-- `PORT`
+The backend includes runtime safeguards:
 
-Optional:
-- `NODE_ENV` (`development` | `production`)
+Health check endpoint (/api/health)
+Version endpoint (/api/version)
+Smoke test for runtime validation
+Environment validation on startup
 
-## Seed Instructions
+Run smoke test:
 
-Run:
-```bash
-npm run seed
-```
+npm run smoke:runtime
+CI Pipeline
 
-What it does:
-- Clears existing `users` and `financialrecords` collections
-- Inserts demo users for each role
-- Inserts sample financial records
+GitHub Actions automatically:
 
-## Default Admin Credentials
+Runs backend tests
+Starts server and performs smoke test
+Builds frontend
+Enforces bundle size limit
 
-After seeding:
-- Email: `admin@zorvyn.com`
-- Password: `admin123`
+This ensures the app is not only building, but actually running correctly.
 
-Also seeded:
-- `analyst@zorvyn.com` / `analyst123`
-- `viewer@zorvyn.com` / `viewer123`
+Architecture
+Client → Middleware → Controller → Service → Database
+Controllers handle requests
+Services handle business logic
+Middleware handles authentication, validation, and errors
+Design Decisions
 
-## Features Implemented (Submission Checklist Mapping)
+Service Layer
+Separates business logic from controllers, improving maintainability.
 
-### 1) User & Role Management
-- Registration and login with JWT
-- Roles supported: `ADMIN`, `ANALYST`, `VIEWER`
-- Admin APIs to update user role and status
-- Route-level + service-level RBAC enforcement
+Soft Delete
+Preserves data for analytics and prevents accidental loss.
 
-### 2) Financial Records CRUD
-- Create record (`POST /records`)
-- Read records (`GET /records`, `GET /records/:id`)
-- Update record (`PATCH /records/:id`, `PUT /records/:id`)
-- Delete record via soft delete (`DELETE /records/:id` -> `isDeleted: true`)
-- Every record linked to `userId`
+Global Read Access
+All roles can view records; only admins can modify them.
 
-### 3) Record Filtering
-- `type` filter
-- `category` filter
-- Date range (`startDate`, `endDate`)
-- Search filter across `notes` and `category` (regex-escaped)
-- Pagination (`page`, `limit`, default limit `10`)
+Layered RBAC
+Authorization enforced at both route and service levels.
 
-### 4) Dashboard Summary APIs
-- `GET /dashboard/summary`: total income, total expense, net balance
-- `GET /dashboard/trends`: monthly income/expense trend
-- `GET /dashboard/trends/weekly`: weekly income/expense trend
-- `GET /dashboard/categories`: category/type totals
-- `GET /dashboard/recent`: recent activity
+Known Limitations
+No password reset
+No audit logging system
+Limited automated test coverage
+No real-time updates
+No export functionality
+No multi-tenant support
+Testing Status
 
-### 5) Role-Based Access Control
-- Viewer: read-only access to own records and own summary/recent
-- Analyst: read access + analytics, scoped to own records
-- Admin: full access across users and records
+Basic tests cover:
 
-### 6) Validation & Error Handling
-- `express-validator` on auth/user/record routes
-- Centralized error middleware (`src/middlewares/error.middleware.js`)
-- Structured error response:
-```json
-{
-  "success": false,
-  "message": "Error message",
-  "errors": []
-}
-```
+Authentication
+RBAC enforcement
+Core record flows
 
-### 7) Data Persistence
-- MongoDB via Mongoose
-- Proper schemas for `User` and `FinancialRecord`
-- Password hashing in model pre-save hook
+Test coverage is currently limited and can be expanded further.
 
-## Design Decisions
+Final Note
 
-### Why Service Layer
-Controllers stay thin and delegate business logic to services for:
-- Separation of concerns
-- Easier testability
-- Reusability of domain logic
+This project prioritizes system design and backend structure over surface-level features.
 
-### Why Soft Delete
-Records are marked with `isDeleted: true` instead of hard removal to:
-- Preserve auditability
-- Reduce accidental data loss
-- Keep historical integrity for analytics
-
-### Why RBAC
-Role checks and ownership checks enforce:
-- Data isolation between users
-- Principle of least privilege
-- Admin-only governance operations
-
-## Performance Notes
-
-Indexing strategy on `FinancialRecord`:
-- `{ userId: 1 }`
-- `{ date: -1 }`
-- `{ type: 1 }`
-- `{ userId: 1, date: -1 }`
-- `{ userId: 1, type: 1, isDeleted: 1 }`
-
-This improves owner-scoped listing, date sorting, and filtered queries.
-
-## Security Notes
-
-- JWT authentication with expiry
-- Helmet security headers enabled
-- API rate limiting (`/api`, 500 requests / 15 minutes / IP)
-- `express-validator` request validation
-- Password hashing with bcrypt
-- Inactive users blocked at auth middleware
-- Guardrails to prevent removing/deactivating last admin
-
-## Architecture Flow
-
-```mermaid
-flowchart LR
-    A[Client] --> B[RateLimiter]
-    B --> C[Auth]
-    C --> D[Validator]
-    D --> E[Controller]
-    E --> F[Service]
-    F --> G[(DB)]
-```
-
-## API Summary
-
-### Auth
-- `POST /auth/register`
-- `POST /auth/login`
-
-### Users
-- `GET /users/me`
-- `PATCH /users/me`
-- `GET /users` (ADMIN)
-- `GET /users/:id` (ADMIN)
-- `PATCH /users/:id/role` (ADMIN)
-- `PATCH /users/:id/status` (ADMIN)
-
-### Records
-- `GET /records`
-- `GET /records/:id`
-- `POST /records` (ADMIN)
-- `PATCH /records/:id` (ADMIN)
-- `PUT /records/:id` (ADMIN)
-- `DELETE /records/:id` (ADMIN)
-
-### Dashboard
-- `GET /dashboard/summary`
-- `GET /dashboard/categories` (ANALYST, ADMIN)
-- `GET /dashboard/trends` (ANALYST, ADMIN)
-- `GET /dashboard/trends/weekly` (ANALYST, ADMIN)
-- `GET /dashboard/recent`
-
-## Scripts
-
-- `npm run dev` - start with nodemon
-- `npm start` - start with node
-- `npm run seed` - reseed database
-- `npm test` - run Jest + Supertest suite
-
-Current automated tests cover:
-- Auth login success/failure
-- Records RBAC (ANALYST/VIEWER mutation denial)
-- Weekly dashboard trends authorization and response
+The focus was to build something that behaves predictably, enforces access correctly, and can scale with additional features — closer to a real-world system than a tutorial project.
