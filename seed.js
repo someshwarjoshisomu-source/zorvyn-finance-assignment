@@ -11,37 +11,27 @@ const seedDatabase = async () => {
     // Connect DB
     await mongoose.connect(process.env.MONGO_URI);
 
-    // Clear existing data
-    await User.deleteMany();
+    // Clear existing records only (keep existing users/roles for login testing)
     await FinancialRecord.deleteMany();
 
-    // Create users (IMPORTANT: use save for hashing)
-    const admin = new User({
-      name: "Admin User",
-      email: "admin@zorvyn.com",
-      password: "admin123",
-      role: "ADMIN",
-      status: "ACTIVE",
-    });
-    await admin.save();
+    // Ensure an ADMIN user exists to own seeded records
+    let admin = await User.findOne({ email: "admin@zorvyn.com" });
 
-    const analyst = new User({
-      name: "Analyst User",
-      email: "analyst@zorvyn.com",
-      password: "analyst123",
-      role: "ANALYST",
-      status: "ACTIVE",
-    });
-    await analyst.save();
-
-    const viewer = new User({
-      name: "Viewer User",
-      email: "viewer@zorvyn.com",
-      password: "viewer123",
-      role: "VIEWER",
-      status: "ACTIVE",
-    });
-    await viewer.save();
+    if (!admin) {
+      admin = new User({
+        name: "Admin User",
+        email: "admin@zorvyn.com",
+        password: "admin123",
+        role: "ADMIN",
+        status: "ACTIVE",
+      });
+      await admin.save();
+    } else {
+      admin.name = "Admin User";
+      admin.role = "ADMIN";
+      admin.status = "ACTIVE";
+      await admin.save();
+    }
 
     // Categories + types
     const categories = [
@@ -55,18 +45,14 @@ const seedDatabase = async () => {
     ];
 
     const types = ["INCOME", "EXPENSE"];
-
     const records = [];
 
-    // Create 20 records
-    for (let i = 0; i < 20; i++) {
+    // Create 30 records, assign all to admin
+    for (let i = 0; i < 30; i++) {
       const randomType = types[Math.floor(Math.random() * types.length)];
       const randomCategory =
         categories[Math.floor(Math.random() * categories.length)];
-
       const randomAmount = Math.floor(Math.random() * 49500) + 500;
-
-      // Date within last 6 months
       const date = new Date();
       date.setMonth(date.getMonth() - Math.floor(Math.random() * 6));
 

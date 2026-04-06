@@ -12,11 +12,11 @@ const router = express.Router();
 router.post(
     "/register",
     [
-        body("name").notEmpty().withMessage("Name is required"),
-        body("email").isEmail().withMessage("Valid email is required"),
+        body("name").trim().isLength({ min: 2, max: 80 }).withMessage("Name must be between 2 and 80 characters"),
+        body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
         body("password")
-        .isLength({min: 6})
-        .withMessage("Password must be at least 6 characters")
+        .matches(/^(?=.*[A-Za-z])(?=.*\d).{8,}$/)
+        .withMessage("Password must be at least 8 characters and include letters and numbers")
     ],
     validate,
     authController.register
@@ -25,8 +25,10 @@ router.post(
 //Login
 
 router.post("/login", [
-  body("email").isEmail().withMessage("Valid email is required"),
-  body("password").notEmpty().withMessage("Password must be at least 6 characters")
+    body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
+  body("password")
+        .isLength({ min: 6, max: 128 })
+        .withMessage("Password length must be between 6 and 128 characters")
 ],
 validate,
 authController.login

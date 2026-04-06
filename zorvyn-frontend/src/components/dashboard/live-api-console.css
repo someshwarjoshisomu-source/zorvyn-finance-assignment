@@ -1,0 +1,112 @@
+/* Live API Console Terminal Styles */
+
+.live-console {
+  width: 100%;
+  background: #0f1419;
+  border: 1px solid rgba(15, 235, 206, 0.2);
+  border-radius: 12px;
+  overflow-y: auto;
+  max-height: 500px;
+  font-family: "Monaco", "Courier New", "Courier", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #a8e6d3;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(15, 235, 206, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 235, 206, 0.3) transparent;
+}
+
+.live-console::-webkit-scrollbar {
+  width: 8px;
+}
+
+.live-console::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.live-console::-webkit-scrollbar-thumb {
+  background: rgba(15, 235, 206, 0.3);
+  border-radius: 4px;
+}
+
+.live-console::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 235, 206, 0.5);
+}
+
+.console-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(15, 235, 206, 0.1);
+}
+
+.console-prompt {
+  color: #0feba6;
+  font-weight: bold;
+}
+
+.console-command {
+  color: #ffd700;
+  font-weight: 500;
+}
+
+.console-output {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.console-line {
+  display: flex;
+  gap: 12px;
+}
+
+.console-line-num {
+  color: rgba(168, 230, 211, 0.4);
+  user-select: none;
+  min-width: 40px;
+  text-align: right;
+}
+
+.console-text {
+  color: #a8e6d3;
+  white-space: pre-wrap;
+  word-break: break-all;
+  flex: 1;
+}
+
+/* JSON syntax highlighting */
+.console-text.key {
+  color: #64b5f6;
+}
+
+.console-text.string {
+  color: #81c784;
+}
+
+.console-text.number {
+  color: #ffb74d;
+}
+
+.console-text.boolean {
+  color: #f48fb1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .live-console {
+    font-size: 12px;
+    padding: 12px;
+  }
+
+  .console-line-num {
+    min-width: 30px;
+  }
+
+  .console-header {
+    margin-bottom: 8px;
+  }
+}

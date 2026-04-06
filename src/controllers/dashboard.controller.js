@@ -1,21 +1,21 @@
-const dashboardService = require("../services/dashboard.service")
+const dashboardService = require("../services/dashboard.service");
 
 const getSummary = async (req, res, next) => {
-    try {
-        const data = await dashboardService.getSummary();
+  try {
+    const data = await dashboardService.getSummary(req.user);
 
-        res.status(200).json({
-            success: true,
-            data
-        });
-    }catch(err){
-        next(err);
-    }
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 const getCategoryTotals = async (req, res, next) => {
   try {
-    const data = await dashboardService.getCategoryTotals();
+    const data = await dashboardService.getCategoryTotals(req.user);
 
     res.status(200).json({
       success: true,
@@ -28,7 +28,33 @@ const getCategoryTotals = async (req, res, next) => {
 
 const getMonthlyTrends = async (req, res, next) => {
   try {
-    const data = await dashboardService.getMonthlyTrends();
+    const data = await dashboardService.getMonthlyTrends(req.user);
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getWeeklyTrends = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getWeeklyTrends(req.user);
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getLast7DaysTrends = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getLast7DaysTrends(req.user);
 
     res.status(200).json({
       success: true,
@@ -41,7 +67,7 @@ const getMonthlyTrends = async (req, res, next) => {
 
 const getRecentActivity = async (req, res, next) => {
   try {
-    const data = await dashboardService.getRecentActivity();
+    const data = await dashboardService.getRecentActivity(req.user);
 
     res.status(200).json({
       success: true,
@@ -53,9 +79,11 @@ const getRecentActivity = async (req, res, next) => {
 };
 
 module.exports = {
-    getSummary,
-    getCategoryTotals,
-    getMonthlyTrends,
-    getRecentActivity
-}
+  getSummary,
+  getCategoryTotals,
+  getMonthlyTrends,
+  getWeeklyTrends,
+  getLast7DaysTrends,
+  getRecentActivity,
+};
 

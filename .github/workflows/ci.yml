@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/zorvyn_ci
+      JWT_SECRET: test_jwt_secret_min_32_characters
+      SOURCE_REV: ${{ github.sha }}
+      PORT: 3000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm test
+
+      - name: Start backend server
+        run: |
+          node src/server.js > /tmp/zorvyn-server.log 2>&1 &
+          echo $! > /tmp/zorvyn-server.pid
+
+      - name: Wait for server readiness
+        run: npx wait-on http://127.0.0.1:3000/api/health --timeout 30000
+
+      - name: Runtime smoke check
+        env:
+          SMOKE_BASE_URL: http://127.0.0.1:3000
+          EXPECT_SOURCE_REV: ${{ github.sha }}
+        run: npm run smoke:runtime
+
+      - name: Stop backend server
+        if: always()
+        run: |
+          if [ -f /tmp/zorvyn-server.pid ]; then
+            kill "$(cat /tmp/zorvyn-server.pid)" || true
+          fi
+
+      - name: Show server logs on failure
+        if: failure()
+        run: cat /tmp/zorvyn-server.log
+
+      - name: Install frontend dependencies
+        working-directory: zorvyn-frontend
+        run: npm ci
+
+      - name: Build frontend (includes bundle gate)
+        working-directory: zorvyn-frontend
+        env:
+          MAX_FRONTEND_JS_BUNDLE_BYTES: "450000"
+        run: npm run build

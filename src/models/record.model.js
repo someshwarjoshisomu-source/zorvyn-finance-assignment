@@ -9,7 +9,7 @@ const recordSchema = new mongoose.Schema(
     },
     amount: {
       type: Number,
-      requires: true,
+      required: true,
       min: 0,
     },
     type: {
@@ -37,6 +37,13 @@ const recordSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Indexes for performance optimization
+recordSchema.index({ userId: 1 });
+recordSchema.index({ date: -1 });
+recordSchema.index({ type: 1 });
+recordSchema.index({ userId: 1, date: -1 });
+recordSchema.index({ userId: 1, type: 1, isDeleted: 1 });
 
 
 module.exports = mongoose.model("FinancialRecord", recordSchema)
