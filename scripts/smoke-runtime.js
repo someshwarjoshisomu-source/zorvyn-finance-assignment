@@ -54,6 +54,7 @@ async function validateVersion() {
 }
 
 (async () => {
+  console.log("BASE_URL:", BASE_URL);
   const health = await waitForHealth();
   const version = await validateVersion();
 

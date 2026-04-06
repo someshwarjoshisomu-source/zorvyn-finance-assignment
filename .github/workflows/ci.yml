@@ -8,6 +8,7 @@ on:
 jobs:
   test-and-verify:
     runs-on: ubuntu-latest
+
     services:
       mongo:
         image: mongo:7
@@ -23,6 +24,7 @@ jobs:
       MONGO_URI: mongodb://127.0.0.1:27017/zorvyn_ci
       JWT_SECRET: test_jwt_secret_min_32_characters
       SOURCE_REV: ${{ github.sha }}
+      PORT: 3000
 
     steps:
       - name: Checkout
@@ -44,9 +46,12 @@ jobs:
           node src/server.js > /tmp/zorvyn-server.log 2>&1 &
           echo $! > /tmp/zorvyn-server.pid
 
+      - name: Wait for server readiness
+        run: npx wait-on http://127.0.0.1:3000/api/health --timeout 30000
+
       - name: Runtime smoke check
         env:
-          BASE_URL: http://127.0.0.1:3000
+          SMOKE_BASE_URL: http://127.0.0.1:3000
           EXPECT_SOURCE_REV: ${{ github.sha }}
         run: npm run smoke:runtime
 
